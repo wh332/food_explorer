@@ -9,12 +9,16 @@ export default defineConfig({
     open: true
   },
   optimizeDeps: {
-    exclude: ['@supabase/supabase-js']
+    include: ['@supabase/supabase-js']
   },
   build: {
     commonjsOptions: {
-      exclude: ['@supabase/supabase-js'],
-      include: []
+      transformMixedEsModules: true,
+      esmExternals: true
+    },
+    rollupOptions: {
+      external: [],
+      plugins: []
     }
   }
 })
