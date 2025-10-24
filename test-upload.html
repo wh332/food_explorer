@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>照片上传测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        .upload-area:hover {
+            border-color: #007bff;
+        }
+        #fileInput {
+            display: none;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .photo-preview {
+            max-width: 200px;
+            max-height: 200px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>照片上传功能测试</h1>
+    
+    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+        <h3>点击选择照片进行测试</h3>
+        <p>支持 JPG、PNG 格式，最大 5MB</p>
+    </div>
+    
+    <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)">
+    
+    <div id="result"></div>
+    <div id="photoList"></div>
+
+    <script>
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // 检查文件类型和大小
+            if (!file.type.startsWith('image/')) {
+                showResult('请选择图片文件', 'error');
+                return;
+            }
+            
+            if (file.size > 5 * 1024 * 1024) {
+                showResult('文件大小不能超过 5MB', 'error');
+                return;
+            }
+            
+            // 模拟上传到本地存储
+            uploadToLocalStorage(file);
+        }
+        
+        function uploadToLocalStorage(file) {
+            showResult('正在上传...', '');
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    // 创建照片数据
+                    const photoData = {
+                        id: 'test_' + Date.now(),
+                        user_id: 'test_user',
+                        file_name: file.name,
+                        file_url: e.target.result,
+                        file_size: file.size,
+                        upload_date: new Date().toISOString(),
+                        is_avatar: false,
+                        created_at: new Date().toISOString()
+                    };
+                    
+                    // 保存到本地存储
+                    const existingPhotos = JSON.parse(localStorage.getItem('supabase_user_photos') || '[]');
+                    existingPhotos.push(photoData);
+                    localStorage.setItem('supabase_user_photos', JSON.stringify(existingPhotos));
+                    
+                    showResult('照片上传成功！', 'success');
+                    showPhotoPreview(photoData);
+                    loadPhotos();
+                    
+                } catch (error) {
+                    showResult('上传失败: ' + error.message, 'error');
+                }
+            };
+            
+            reader.onerror = function() {
+                showResult('文件读取失败', 'error');
+            };
+            
+            reader.readAsDataURL(file);
+        }
+        
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `<div class="result ${type}">${message}</div>`;
+        }
+        
+        function showPhotoPreview(photoData) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML += `
+                <div style="margin-top: 10px;">
+                    <strong>预览:</strong>
+                    <img src="${photoData.file_url}" alt="预览" class="photo-preview">
+                    <div>文件名: ${photoData.file_name}</div>
+                    <div>大小: ${formatFileSize(photoData.file_size)}</div>
+                </div>
+            `;
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        function loadPhotos() {
+            const photoListDiv = document.getElementById('photoList');
+            const photos = JSON.parse(localStorage.getItem('supabase_user_photos') || '[]');
+            
+            if (photos.length === 0) {
+                photoListDiv.innerHTML = '<p>还没有上传照片</p>';
+                return;
+            }
+            
+            let html = '<h3>已上传的照片 (' + photos.length + ' 张):</h3>';
+            photos.forEach(photo => {
+                html += `
+                    <div style="border: 1px solid #ccc; padding: 10px; margin: 5px 0;">
+                        <img src="${photo.file_url}" alt="${photo.file_name}" style="max-width: 100px; max-height: 100px;">
+                        <div>${photo.file_name} (${formatFileSize(photo.file_size)})</div>
+                        <div>${new Date(photo.upload_date).toLocaleString()}</div>
+                    </div>
+                `;
+            });
+            
+            photoListDiv.innerHTML = html;
+        }
+        
+        // 页面加载时显示已有照片
+        window.onload = loadPhotos;
+    </script>
+</body>
+</html>
