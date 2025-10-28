@@ -6,8 +6,13 @@
         ← 返回菜系列表
       </button>
 
+      <!-- 加载状态 -->
+      <div v-if="!cuisine" class="loading">
+        <p>正在加载菜系信息...</p>
+      </div>
+
       <!-- 菜系头部信息 -->
-      <div class="cuisine-header">
+      <div v-if="cuisine" class="cuisine-header">
         <div class="cuisine-image">
           <img :src="cuisine.image" :alt="cuisine.name" class="header-image">
         </div>
@@ -29,7 +34,7 @@
       </div>
 
       <!-- 历史渊源 -->
-      <section class="history-section">
+      <section v-if="cuisine" class="history-section">
         <h2>历史渊源</h2>
         <div class="history-content">
           <p>{{ cuisine.history }}</p>
@@ -37,7 +42,7 @@
       </section>
 
       <!-- 特色介绍 -->
-      <section class="features-section">
+      <section v-if="cuisine" class="features-section">
         <h2>特色介绍</h2>
         <div class="features-content">
           <p>{{ cuisine.features }}</p>
@@ -45,7 +50,7 @@
       </section>
 
       <!-- 代表菜品 -->
-      <section class="dishes-section">
+      <section v-if="cuisine" class="dishes-section">
         <h2>代表菜品</h2>
         <div class="dishes-grid">
           <div v-for="dishName in cuisine.representativeDishes" :key="dishName" class="dish-card">
@@ -63,7 +68,7 @@
       </section>
 
       <!-- 相关菜品 -->
-      <section class="related-dishes">
+      <section v-if="cuisine" class="related-dishes">
         <h2>相关菜品</h2>
         <div class="dishes-list">
           <div v-for="dish in relatedDishes" :key="dish.id" class="related-dish-card">

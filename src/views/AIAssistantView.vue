@@ -218,11 +218,11 @@ const sendMessage = async () => {
   isLoading.value = true
 
   try {
-    const aiResponse = await callAIAssistant(userMessage)
+    const aiResponse = await callN8NAssistant(userMessage)
     addMessage('assistant', aiResponse)
     updateRecommendationsBasedOnAI(aiResponse)
   } catch (error) {
-    console.error('AI助手调用失败:', error)
+    console.error('n8n助手调用失败:', error)
     addMessage('assistant', '抱歉，AI助手暂时无法响应。为您推荐一些热门菜品：')
     updateRecommendations()
   } finally {
@@ -230,19 +230,63 @@ const sendMessage = async () => {
   }
 }
 
-const callAIAssistant = async (userMessage: string): Promise<string> => {
-  // 模拟AI响应 - 实际项目中可以替换为真实的API调用
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const responses = [
-        `根据您提到的"${userMessage}"，我为您推荐以下菜品：这些菜品都符合您的需求，制作简单且美味！`,
-        `检测到您对${userMessage.includes('辣') ? '辣味' : userMessage.includes('甜') ? '甜味' : '家常'}菜品感兴趣，这些推荐应该很适合您：`,
-        `基于您的偏好，我发现这些菜品可能符合您的要求，它们都是很受欢迎的选择：`,
-        `根据您的搜索条件，我筛选出了这些优质菜品，希望您会喜欢：`
-      ]
-      resolve(responses[Math.floor(Math.random() * responses.length)])
-    }, 1500)
-  })
+const callN8NAssistant = async (userMessage: string): Promise<string> => {
+  const n8nUrl = 'http://localhost:5678/webhook-test/food'
+  
+  try {
+    console.log('发送请求到n8n:', { question: userMessage })
+    
+    const response = await fetch(n8nUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        question: userMessage
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    // 首先尝试解析为JSON，如果失败则作为纯文本处理
+    const responseText = await response.text()
+    console.log('n8n返回原始文本:', responseText)
+    
+    try {
+      // 尝试解析为JSON
+      const data = JSON.parse(responseText)
+      console.log('n8n返回JSON数据:', data)
+      
+      // 处理JSON格式的响应
+      if (typeof data === 'string') {
+        return data
+      } else if (data && typeof data === 'object') {
+        // 尝试从常见字段中提取回答内容
+        const possibleAnswerFields = ['answer', 'response', 'text', 'content', 'message', 'result']
+        for (const field of possibleAnswerFields) {
+          if (data[field] && typeof data[field] === 'string') {
+            return data[field]
+          }
+        }
+        
+        // 如果找不到特定字段，尝试返回整个响应的字符串表示
+        return JSON.stringify(data, null, 2)
+      }
+    } catch (jsonError) {
+      // 如果JSON解析失败，说明返回的是纯文本
+      console.log('n8n返回的是纯文本响应')
+      return responseText
+    }
+    
+    return '收到您的提问，正在处理中...'
+  } catch (error) {
+    console.error('调用n8n服务失败:', error)
+    // 如果n8n服务不可用，返回一个友好的提示
+    const errorMessage = error instanceof Error ? error.message : '未知错误'
+    return `抱歉，AI助手暂时无法响应。请检查n8n服务是否正常运行。错误信息：${errorMessage}`
+  }
 }
 
 const updateRecommendationsBasedOnAI = (aiResponse: string) => {
