@@ -87,5 +87,6 @@ export const useFavoritesStore = defineStore('favorites', () => {
     isFavorite,
     toggleFavorite,
     clearFavorites
+    
   }
 })
