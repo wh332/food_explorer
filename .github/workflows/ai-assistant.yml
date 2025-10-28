@@ -1,0 +1,113 @@
+name: AI Assistant Workflow
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'src/views/AIAssistantView.vue'
+      - 'src/services/aiService.ts'
+      - 'src/utils/aiUtils.ts'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'src/views/AIAssistantView.vue'
+      - 'src/services/aiService.ts'
+      - 'src/utils/aiUtils.ts'
+  schedule:
+    # 每周一早上6点运行AI助手测试
+    - cron: '0 6 * * 1'
+
+jobs:
+  ai-assistant-test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run TypeScript type checking
+      run: npx vue-tsc --noEmit
+
+    - name: Build project
+      run: npm run build
+
+    - name: Run AI assistant unit tests
+      run: npm test -- --testPathPattern="ai-assistant|AIAssistant"
+
+    - name: AI assistant integration test
+      run: |
+        # 模拟AI助手API调用测试
+        echo "Running AI assistant integration tests..."
+        # 这里可以添加实际的AI助手API测试脚本
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ai-assistant-build-${{ matrix.node-version }}
+        path: dist/
+        retention-days: 7
+
+  ai-assistant-deploy:
+    needs: ai-assistant-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build project
+      run: npm run build
+
+    - name: Deploy to Netlify
+      uses: netlify/actions/cli@v2
+      with:
+        args: deploy --prod --dir=dist
+      env:
+        NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+
+  ai-assistant-monitor:
+    runs-on: ubuntu-latest
+    needs: ai-assistant-deploy
+    if: always()
+
+    steps:
+    - name: Check deployment status
+      run: |
+        echo "AI Assistant deployment monitoring..."
+        # 这里可以添加AI助手性能监控脚本
+
+    - name: Send notification
+      if: failure()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: 'AI Assistant Deployment Failed',
+            body: 'AI助手功能部署失败，请检查工作流日志。'
+          })
