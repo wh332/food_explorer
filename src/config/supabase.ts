@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Supabase配置 - 使用默认配置
-const supabaseUrl = 'https://dpmpxpsbwssmoshpruup.supabase.co'
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwbXB4cHNid3NzbW9zaHBydXVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1NTY2NjUsImV4cCI6MjA3NjEzMjY2NX0.LHByt25fw0XIi4rQkonSsP7Z_rMyG46VspZ0_zkpNV0'
+// Supabase配置 - 使用正确的项目配置
+const supabaseUrl = 'https://frodvnbyjnoiwyobklhp.supabase.co'
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyb2R2bmJ5am5vaXd5b2JrbGhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MzI0NzcsImV4cCI6MjA3NzIwODQ3N30.9SnLhaF2at5-NJShMKWaSF_iJ3tg-m-JBvfAoD0JJN8'
 
 // 创建Supabase客户端
 export const supabase = createClient(supabaseUrl, supabaseKey, {

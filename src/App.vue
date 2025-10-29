@@ -9,8 +9,21 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import NavBar from './components/layout/NavBar.vue'
 import Footer from './components/layout/Footer.vue'
+import { useFoodStore } from './stores/foodStore'
+
+const foodStore = useFoodStore()
+
+onMounted(async () => {
+  // 应用启动时初始化数据库数据
+  try {
+    await foodStore.initializeData()
+  } catch (error) {
+    console.error('初始化数据失败:', error)
+  }
+})
 </script>
 
 <style>
