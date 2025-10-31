@@ -9,7 +9,8 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    flowType: 'implicit' // 禁用邮箱确认，允许直接登录
   },
   db: {
     schema: 'public'
@@ -22,6 +23,21 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
 })
 
 // 数据库表结构定义
+export interface UserProfile {
+  id?: string
+  user_id: string
+  username: string
+  email: string
+  full_name?: string
+  bio?: string
+  avatar_url?: string
+  location?: string
+  website?: string
+  preferences?: Record<string, any>
+  created_at?: string
+  updated_at?: string
+}
+
 export interface UserPhoto {
   id?: string
   user_id?: string

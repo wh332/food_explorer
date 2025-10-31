@@ -1,7 +1,23 @@
 -- Supabase数据库初始化脚本
 -- 为美食探索者项目创建必要的表结构
 
--- 1. 创建用户照片表
+-- 1. 创建用户信息表
+CREATE TABLE IF NOT EXISTS user_profiles (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id TEXT NOT NULL UNIQUE,
+    username TEXT NOT NULL,
+    email TEXT NOT NULL,
+    full_name TEXT,
+    bio TEXT,
+    avatar_url TEXT,
+    location TEXT,
+    website TEXT,
+    preferences JSONB DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 2. 创建用户照片表
 CREATE TABLE IF NOT EXISTS user_photos (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id TEXT NOT NULL,
@@ -55,12 +71,17 @@ CREATE TABLE IF NOT EXISTS user_favorites (
 );
 
 -- 5. 启用行级安全策略
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_photos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cuisine_data ENABLE ROW LEVEL SECURITY;
 ALTER TABLE dish_data ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_favorites ENABLE ROW LEVEL SECURITY;
 
 -- 6. 创建行级安全策略
+-- 用户信息策略：用户只能访问自己的信息
+CREATE POLICY "用户只能访问自己的信息" ON user_profiles
+    FOR ALL USING (auth.uid()::text = user_id);
+
 -- 用户照片策略：用户只能访问自己的照片
 CREATE POLICY "用户只能访问自己的照片" ON user_photos
     FOR ALL USING (auth.uid()::text = user_id);
@@ -130,6 +151,9 @@ INSERT INTO dish_data (name, cuisine_name, difficulty, time_required, ingredient
 ('黄山烧鸭', '徽菜', '中等', '60分钟', '{"鸭子 1只", "酱油 3汤匙", "糖 1汤匙", "料酒 1汤匙"}', '{"腌制鸭子", "烤制上色", "炖煮入味"}', '色泽红亮，味浓醇厚，是徽菜传统佳肴', 4.6, 'https://images.unsplash.com/photo-1569058242282-92e9c2c5b706?w=400&h=300&fit=crop&auto=format');
 
 -- 9. 创建索引以提高查询性能
+CREATE INDEX IF NOT EXISTS idx_user_profiles_user_id ON user_profiles(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_profiles_username ON user_profiles(username);
+CREATE INDEX IF NOT EXISTS idx_user_profiles_email ON user_profiles(email);
 CREATE INDEX IF NOT EXISTS idx_user_photos_user_id ON user_photos(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_favorites_user_id ON user_favorites(user_id);
 CREATE INDEX IF NOT EXISTS idx_dish_data_cuisine_id ON dish_data(cuisine_id);
