@@ -7,14 +7,20 @@
       </button>
 
       <!-- 加载状态 -->
-      <div v-if="!cuisine" class="loading">
-        <p>正在加载菜系信息...</p>
+      <div v-if="isLoading" class="loading">
+        <p>正在从数据库加载菜系信息...</p>
+      </div>
+
+      <!-- 错误状态 -->
+      <div v-if="error && !cuisine" class="error">
+        <p>{{ error }}</p>
+        <button @click="loadCuisineFromDatabase" class="retry-btn">重试</button>
       </div>
 
       <!-- 菜系头部信息 -->
       <div v-if="cuisine" class="cuisine-header">
         <div class="cuisine-image">
-          <img :src="cuisine.image" :alt="cuisine.name" class="header-image">
+          <img :src="cuisine.image_url || 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&h=400&fit=crop&auto=format'" :alt="cuisine.name" class="header-image">
         </div>
         <div class="cuisine-info">
           <h1 class="cuisine-title">{{ cuisine.name }}</h1>
@@ -34,7 +40,7 @@
       </div>
 
       <!-- 历史渊源 -->
-      <section v-if="cuisine" class="history-section">
+      <section v-if="cuisine && cuisine.history" class="history-section">
         <h2>历史渊源</h2>
         <div class="history-content">
           <p>{{ cuisine.history }}</p>
@@ -53,7 +59,7 @@
       <section v-if="cuisine" class="dishes-section">
         <h2>代表菜品</h2>
         <div class="dishes-grid">
-          <div v-for="dishName in cuisine.representativeDishes" :key="dishName" class="dish-card">
+          <div v-for="dishName in cuisine.representative_dishes" :key="dishName" class="dish-card">
             <div class="dish-image">
               <span class="dish-emoji">🍲</span>
             </div>
@@ -72,13 +78,13 @@
         <h2>相关菜品</h2>
         <div class="dishes-list">
           <div v-for="dish in relatedDishes" :key="dish.id" class="related-dish-card">
-            <img :src="dish.image" :alt="dish.name" class="dish-thumb">
+            <img :src="dish.image_url || 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&h=150&fit=crop&auto=format'" :alt="dish.dish_name" class="dish-thumb">
             <div class="dish-details">
-              <h4>{{ dish.name }}</h4>
+              <h4>{{ dish.dish_name }}</h4>
               <p>{{ dish.description }}</p>
               <div class="dish-meta">
                 <span class="difficulty">{{ dish.difficulty }}</span>
-                <span class="time">{{ dish.time }}</span>
+                <span class="time">{{ dish.time_required }}</span>
               </div>
               <button class="btn-primary" @click="viewDishDetail(dish.id)">
                 查看详情
@@ -92,34 +98,98 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useFoodStore } from '../stores/foodStore'
+import { supabase } from '../config/supabase'
+import type { Cuisine } from '../stores/foodStore'
 
 const route = useRoute()
 const router = useRouter()
 const foodStore = useFoodStore()
 
-const cuisineId = computed(() => parseInt(route.params.id as string))
-const cuisine = computed(() => foodStore.cuisines.find(c => c.id === cuisineId.value))
+const cuisineId = computed(() => route.params.id as string)
+const cuisine = ref<Cuisine | null>(null)
+const isLoading = ref(true)
+const error = ref<string | null>(null)
 
+// 从数据库加载菜系详情
+const loadCuisineFromDatabase = async () => {
+  isLoading.value = true
+  error.value = null
+  
+  try {
+    // 首先尝试从数据库加载
+    const { data, error: dbError } = await supabase
+      .from('cuisine_data')
+      .select('*')
+      .eq('id', cuisineId.value)
+      .single()
+    
+    if (dbError) throw dbError
+    
+    if (data) {
+      // 将数据库数据转换为前端接口格式
+      cuisine.value = {
+        id: data.id,
+        name: data.name,  // 数据库中是name字段
+        description: data.description,
+        characteristics: data.characteristics || [],
+        representative_dishes: data.representative_dishes || [],
+        image_url: data.image_url,
+        region: data.region || '',
+        history: data.history || '',
+        features: data.features || '',
+        time_required: data.time_required,
+        created_at: data.created_at
+      }
+    } else {
+      // 如果数据库中没有，尝试从本地数据中查找
+      const localCuisine = foodStore.cuisines.find(c => c.id === cuisineId.value)
+      if (localCuisine) {
+        cuisine.value = localCuisine
+      } else {
+        error.value = '未找到该菜系信息'
+      }
+    }
+  } catch (err) {
+    console.error('加载菜系详情失败:', err)
+    error.value = '加载菜系详情失败'
+    
+    // 降级到本地数据
+    const localCuisine = foodStore.cuisines.find(c => c.id === cuisineId.value)
+    if (localCuisine) {
+      cuisine.value = localCuisine
+    }
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// 获取相关菜品（从数据库或本地数据）
 const relatedDishes = computed(() => {
-  return foodStore.dishes.filter(dish => dish.cuisine === cuisine.value?.name)
+  if (!cuisine.value) return []
+  
+  // 优先使用数据库中的菜品数据
+  return foodStore.dishes.filter(dish => dish.cuisine_name === cuisine.value?.name)
 })
 
 const viewDishRecipe = (dishName: string) => {
-  const dish = foodStore.dishes.find(d => d.name === dishName)
+  const dish = foodStore.dishes.find(d => d.dish_name === dishName)
   if (dish) {
     router.push(`/dish/${dish.id}`)
   }
 }
 
-const viewDishDetail = (dishId: number) => {
+const viewDishDetail = (dishId: string) => {
   router.push(`/dish/${dishId}`)
 }
 
-onMounted(() => {
-  if (!cuisine.value) {
+onMounted(async () => {
+  await loadCuisineFromDatabase()
+  
+  // 如果加载失败且没有本地数据，跳转回菜系列表
+  if (!cuisine.value && error.value) {
     router.push('/cuisines')
   }
 })
@@ -339,6 +409,36 @@ section h2 {
 
 .btn-primary:hover {
   transform: translateY(-2px);
+}
+
+/* 错误状态样式 */
+.error {
+  text-align: center;
+  padding: 40px 20px;
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.error p {
+  color: #c53030;
+  font-size: 1.1rem;
+  margin-bottom: 20px;
+}
+
+.retry-btn {
+  background: #3182ce;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.retry-btn:hover {
+  background: #2c5aa0;
 }
 
 @media (max-width: 768px) {

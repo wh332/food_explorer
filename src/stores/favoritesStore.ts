@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export interface FavoriteItem {
-  id: number
+  id: string
   type: 'cuisine' | 'dish'
   name: string
   image: string
@@ -44,7 +44,7 @@ export const useFavoritesStore = defineStore('favorites', () => {
   }
 
   // 移除收藏
-  const removeFavorite = (id: number, type: 'cuisine' | 'dish') => {
+  const removeFavorite = (id: string, type: 'cuisine' | 'dish') => {
     const index = favorites.value.findIndex(fav => 
       fav.id === id && fav.type === type
     )
@@ -56,7 +56,7 @@ export const useFavoritesStore = defineStore('favorites', () => {
   }
 
   // 检查是否已收藏
-  const isFavorite = (id: number, type: 'cuisine' | 'dish') => {
+  const isFavorite = (id: string, type: 'cuisine' | 'dish') => {
     return favorites.value.some(fav => 
       fav.id === id && fav.type === type
     )

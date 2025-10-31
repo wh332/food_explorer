@@ -9,8 +9,30 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import NavBar from './components/layout/NavBar.vue'
 import Footer from './components/layout/Footer.vue'
+import { useFoodStore } from './stores/foodStore'
+import { useUserStore } from './stores/userStore'
+
+const foodStore = useFoodStore()
+const userStore = useUserStore()
+
+onMounted(async () => {
+  // 应用启动时初始化用户认证状态
+  try {
+    await userStore.initializeAuth()
+  } catch (error) {
+    console.error('初始化用户认证失败:', error)
+  }
+  
+  // 应用启动时初始化数据库数据
+  try {
+    await foodStore.initializeData()
+  } catch (error) {
+    console.error('初始化数据失败:', error)
+  }
+})
 </script>
 
 <style>

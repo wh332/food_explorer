@@ -62,7 +62,7 @@ const handleSearch = () => {
       name: cuisine.name,
       type: '菜系',
       description: cuisine.description,
-      image: cuisine.image,
+      image: cuisine.image_url,
       route: `/cuisine/${cuisine.id}`
     }))
 
@@ -78,7 +78,7 @@ const handleSearch = () => {
       name: dish.name,
       type: '菜品',
       description: dish.description,
-      image: dish.image,
+      image: dish.image_url || 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=100&h=75&fit=crop&auto=format',
       route: `/dish/${dish.id}`
     }))
 

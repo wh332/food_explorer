@@ -1,15 +1,16 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Supabase配置 - 使用默认配置
-const supabaseUrl = 'https://dpmpxpsbwssmoshpruup.supabase.co'
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwbXB4cHNid3NzbW9zaHBydXVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA1NTY2NjUsImV4cCI6MjA3NjEzMjY2NX0.LHByt25fw0XIi4rQkonSsP7Z_rMyG46VspZ0_zkpNV0'
+// Supabase配置 - 使用正确的项目配置
+const supabaseUrl = 'https://frodvnbyjnoiwyobklhp.supabase.co'
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyb2R2bmJ5am5vaXd5b2JrbGhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2MzI0NzcsImV4cCI6MjA3NzIwODQ3N30.9SnLhaF2at5-NJShMKWaSF_iJ3tg-m-JBvfAoD0JJN8'
 
 // 创建Supabase客户端
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    flowType: 'implicit' // 禁用邮箱确认，允许直接登录
   },
   db: {
     schema: 'public'
@@ -22,6 +23,21 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
 })
 
 // 数据库表结构定义
+export interface UserProfile {
+  id?: string
+  user_id: string
+  username: string
+  email: string
+  full_name?: string
+  bio?: string
+  avatar_url?: string
+  location?: string
+  website?: string
+  preferences?: Record<string, any>
+  created_at?: string
+  updated_at?: string
+}
+
 export interface UserPhoto {
   id?: string
   user_id?: string

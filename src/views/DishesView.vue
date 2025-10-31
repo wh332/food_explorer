@@ -46,16 +46,16 @@
           </div>
           <div class="dish-content">
             <div class="dish-header">
-              <h3>{{ dish.name }}</h3>
+              <h3>{{ dish.dish_name }}</h3>
               <span class="rating">⭐ {{ dish.rating }}</span>
             </div>
-            <span class="cuisine-tag">{{ dish.cuisine }}</span>
+            <span class="cuisine-tag">{{ dish.cuisine_name }}</span>
             <p class="dish-desc">{{ dish.description }}</p>
             
             <div class="dish-meta">
               <span class="meta-item">
                 <span class="meta-icon">⏱️</span>
-                {{ dish.time }}
+                {{ dish.time_required }}
               </span>
               <span class="meta-item">
                 <span class="meta-icon">📊</span>
@@ -104,17 +104,17 @@ const cuisines = foodStore.cuisines
 const filteredDishes = computed(() => {
   return dishes.filter((dish: any) => {
     const matchesSearch = !searchQuery.value || 
-      dish.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      dish.dish_name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       dish.ingredients.some((ing: string) => ing.toLowerCase().includes(searchQuery.value.toLowerCase()))
     
-    const matchesCuisine = !selectedCuisine.value || dish.cuisine === selectedCuisine.value
+    const matchesCuisine = !selectedCuisine.value || dish.cuisine_name === selectedCuisine.value
     const matchesDifficulty = !selectedDifficulty.value || dish.difficulty === selectedDifficulty.value
 
     return matchesSearch && matchesCuisine && matchesDifficulty
   })
 })
 
-const viewDishDetail = (dishId: number) => {
+const viewDishDetail = (dishId: string) => {
   router.push(`/dish/${dishId}`)
 }
 

@@ -13,7 +13,7 @@ import { computed } from 'vue'
 import { useFavoritesStore } from '../stores/favoritesStore'
 
 interface Props {
-  itemId: number
+  itemId: string
   itemType: 'cuisine' | 'dish'
   itemName: string
   itemImage: string

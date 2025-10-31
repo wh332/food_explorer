@@ -15,7 +15,7 @@
         
         <div class="dish-info">
           <div class="dish-header">
-            <h1>{{ dish.name }}</h1>
+            <h1>{{ dish.dish_name }}</h1>
             <div class="dish-rating">
               <span class="rating-stars">⭐⭐⭐⭐⭐</span>
               <span class="rating-value">{{ dish.rating }}</span>
@@ -23,10 +23,10 @@
           </div>
           
           <div class="dish-meta-large">
-            <span class="cuisine-badge">{{ dish.cuisine }}</span>
+            <span class="cuisine-badge">{{ dish.cuisine_name }}</span>
             <span class="meta-item">
               <span class="meta-icon">⏱️</span>
-              烹饪时间: {{ dish.time }}
+              烹饪时间: {{ dish.time_required }}
             </span>
             <span class="meta-item">
               <span class="meta-icon">📊</span>
@@ -72,8 +72,8 @@
               <span class="related-emoji">🍲</span>
             </div>
             <div class="related-info">
-              <h4>{{ relatedDish.name }}</h4>
-              <span class="related-cuisine">{{ relatedDish.cuisine }}</span>
+              <h4>{{ relatedDish.dish_name }}</h4>
+              <span class="related-cuisine">{{ relatedDish.cuisine_name }}</span>
             </div>
           </div>
         </div>
@@ -98,14 +98,14 @@ const foodStore = useFoodStore()
 const dish = ref<Dish | null>(null)
 
 onMounted(() => {
-  const dishId = parseInt(route.params.id as string)
+  const dishId = route.params.id as string
   dish.value = foodStore.dishes.find(d => d.id === dishId) || null
 })
 
 const relatedDishes = computed(() => {
   if (!dish.value) return []
   return foodStore.dishes
-    .filter((d: any) => d.cuisine === dish.value!.cuisine && d.id !== dish.value!.id)
+    .filter((d: any) => d.cuisine_name === dish.value!.cuisine_name && d.id !== dish.value!.id)
     .slice(0, 3)
 })
 
@@ -113,7 +113,7 @@ const goBack = () => {
   router.back()
 }
 
-const viewRelatedDish = (dishId: number) => {
+const viewRelatedDish = (dishId: string) => {
   router.push(`/dish/${dishId}`)
 }
 </script>

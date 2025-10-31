@@ -74,11 +74,11 @@
                 <span class="rec-emoji">🍲</span>
               </div>
               <div class="rec-info">
-                <h4>{{ dish.name }}</h4>
-                <span class="rec-cuisine">{{ dish.cuisine }}</span>
+                <h4>{{ dish.dish_name }}</h4>
+                <span class="rec-cuisine">{{ dish.cuisine_name }}</span>
                 <p class="rec-desc">{{ dish.description }}</p>
                 <div class="rec-meta">
-                  <span class="rec-time">{{ dish.time }}</span>
+                  <span class="rec-time">{{ dish.time_required }}</span>
                   <span class="rec-difficulty">{{ dish.difficulty }}</span>
                 </div>
               </div>
@@ -166,12 +166,12 @@ const userPreferences = ref<UserPreferences>({
 })
 const isLoading = ref(false)
 
-// AI助手API配置
-const AI_API_CONFIG = {
-  baseURL: 'https://api.deepseek.com',
-  accessToken: 'sbp_0ee58c64c0621d5636d7ce352f22956caa83b785',
-  model: 'deepseek-chat'
-}
+// AI助手API配置（保留备用）
+// const AI_API_CONFIG = {
+//   baseURL: 'https://api.deepseek.com',
+//   accessToken: 'sbp_0ee58c64c0621d5636d7ce352f22956caa83b785',
+//   model: 'deepseek-chat'
+// }
 
 const quickQuestions = [
   '推荐简单的家常菜',
@@ -297,7 +297,7 @@ const updateRecommendationsBasedOnAI = (aiResponse: string) => {
   
   if (lowerResponse.includes('辣') || userInput.value.includes('辣')) {
     filteredDishes = filteredDishes.filter(dish => 
-      dish.name.includes('辣') || dish.name.includes('麻') || dish.cuisine === '川菜' || dish.cuisine === '湘菜'
+      dish.dish_name.includes('辣') || dish.dish_name.includes('麻') || dish.cuisine_name === '川菜' || dish.cuisine_name === '湘菜'
     )
   }
   
@@ -306,7 +306,7 @@ const updateRecommendationsBasedOnAI = (aiResponse: string) => {
   }
   
   if (lowerResponse.includes('时间') || userInput.value.includes('时间')) {
-    filteredDishes = filteredDishes.filter(dish => dish.time.includes('30') || dish.time.includes('15'))
+    filteredDishes = filteredDishes.filter(dish => dish.time_required.includes('30') || dish.time_required.includes('15'))
   }
   
   recommendedDishes.value = filteredDishes.slice(0, 3)
@@ -317,20 +317,20 @@ const sendQuickQuestion = (question: string) => {
   sendMessage()
 }
 
-// 保留原有的快速响应函数作为备用
-const generateAIResponse = (userMessage: string): string => {
-  const lowerMessage = userMessage.toLowerCase()
-  
-  if (lowerMessage.includes('简单') || lowerMessage.includes('新手')) {
-    return '为您推荐一些简单易学的家常菜，适合烹饪新手尝试！'
-  } else if (lowerMessage.includes('辣') || lowerMessage.includes('麻辣')) {
-    return '发现您喜欢辣味菜品，为您推荐一些麻辣鲜香的川菜和湘菜！'
-  } else if (lowerMessage.includes('时间') || lowerMessage.includes('快速')) {
-    return '为您筛选了一些快速完成的菜品，节省您的烹饪时间！'
-  } else {
-    return '根据您的需求，我为您推荐以下菜品，希望您会喜欢！'
-  }
-}
+// 保留原有的快速响应函数作为备用（已注释）
+// const generateAIResponse = (userMessage: string): string => {
+//   const lowerMessage = userMessage.toLowerCase()
+//   
+//   if (lowerMessage.includes('简单') || lowerMessage.includes('新手')) {
+//     return '为您推荐一些简单易学的家常菜，适合烹饪新手尝试！'
+//   } else if (lowerMessage.includes('辣') || lowerMessage.includes('麻辣')) {
+//     return '发现您喜欢辣味菜品，为您推荐一些麻辣鲜香的川菜和湘菜！'
+//   } else if (lowerMessage.includes('时间') || lowerMessage.includes('快速')) {
+//     return '为您筛选了一些快速完成的菜品，节省您的烹饪时间！'
+//   } else {
+//     return '根据您的需求，我为您推荐以下菜品，希望您会喜欢！'
+//   }
+// }
 
 const updateRecommendations = () => {
   recommendedDishes.value = foodStore.dishes
@@ -342,7 +342,7 @@ const updateRecommendations = () => {
       }
       
       if (userPreferences.value.availableTime) {
-        const timeMatch = dish.time.includes(userPreferences.value.availableTime.replace('以内', ''))
+        const timeMatch = dish.time_required.includes(userPreferences.value.availableTime.replace('以内', ''))
         match = match && timeMatch
       }
       
@@ -356,7 +356,7 @@ const updatePreferences = () => {
   updateRecommendations()
 }
 
-const viewDishDetail = (dishId: number) => {
+const viewDishDetail = (dishId: string) => {
   router.push(`/dish/${dishId}`)
 }
 </script>
