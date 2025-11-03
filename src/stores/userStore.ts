@@ -24,16 +24,37 @@ export const useUserStore = defineStore('user', () => {
   // 初始化用户状态
   const initializeAuth = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session }, error } = await supabase.auth.getSession()
+      
+      if (error) {
+        console.error('获取会话失败:', error)
+        return
+      }
+      
       if (session?.user) {
+        console.log('检测到已登录用户:', session.user.email)
         // 加载用户信息
-        const userProfile = await UserService.getUserProfile(session.user.id)
-        
-        user.value = {
-          id: session.user.id,
-          email: session.user.email!,
-          username: userProfile?.username || session.user.user_metadata?.username
+        try {
+          const userProfile = await UserService.getUserProfile(session.user.id)
+          
+          user.value = {
+            id: session.user.id,
+            email: session.user.email!,
+            username: userProfile?.username || session.user.user_metadata?.username
+          }
+          console.log('用户信息加载成功')
+        } catch (profileError) {
+          console.error('加载用户信息失败:', profileError)
+          // 即使加载失败，也设置基本用户信息
+          user.value = {
+            id: session.user.id,
+            email: session.user.email!,
+            username: session.user.user_metadata?.username
+          }
         }
+      } else {
+        console.log('未检测到登录用户')
+        user.value = null
       }
     } catch (err) {
       console.error('初始化认证失败:', err)

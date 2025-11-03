@@ -113,10 +113,16 @@ const handleLogin = async () => {
   if (!validateForm()) return
   
   try {
-    await userStore.signIn(form.email, form.password)
+    const result = await userStore.signIn(form.email, form.password)
     
-    // 登录成功后跳转到首页
-    router.push('/')
+    if (result && result.user) {
+      console.log('登录成功，用户信息:', result.user.email)
+      // 登录成功后跳转到首页
+      router.push('/')
+    } else {
+      console.error('登录返回结果异常')
+      userStore.error = '登录返回结果异常，请重试'
+    }
   } catch (error) {
     // 错误处理已经在store中完成
     console.error('登录失败:', error)

@@ -10,7 +10,8 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    flowType: 'implicit' // 禁用邮箱确认，允许直接登录
+    flowType: 'pkce', // 使用更安全的PKCE流程
+    storageKey: 'food-explorer-auth'
   },
   db: {
     schema: 'public'

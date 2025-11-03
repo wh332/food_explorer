@@ -79,12 +79,27 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   try {
     // 获取当前用户会话
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { session }, error } = await supabase.auth.getSession()
+    
+    if (error) {
+      console.error('获取会话失败:', error)
+      // 如果获取会话失败，重定向到登录页面
+      if (to.meta.requiresAuth) {
+        next('/login')
+        return
+      }
+    }
     
     // 如果路由需要认证且用户未登录，重定向到登录页面
     if (to.meta.requiresAuth && !session) {
+      console.log('路由守卫: 需要认证但未登录，重定向到登录页面')
       next('/login')
+    } else if (to.path === '/login' && session) {
+      // 如果用户已登录但访问登录页面，重定向到首页
+      console.log('路由守卫: 已登录用户访问登录页面，重定向到首页')
+      next('/')
     } else {
+      console.log('路由守卫: 允许导航到', to.path)
       next()
     }
   } catch (error) {
