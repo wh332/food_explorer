@@ -49,6 +49,15 @@
       <button @click="generateRecipe" class="btn-generate" :disabled="!availableIngredients || isLoading">
         {{ isLoading ? '生成中...' : '生成菜谱' }}
       </button>
+      
+      <!-- n8n服务状态显示 -->
+      <div v-if="n8nStatus" class="service-status">
+        <div class="status-indicator" :class="{ connected: n8nStatus.connected }">
+          <span class="status-dot"></span>
+          {{ n8nStatus.service }}: {{ n8nStatus.status }}
+          <span v-if="n8nStatus.fallback" class="fallback-info">(备用: {{ n8nStatus.fallback }})</span>
+        </div>
+      </div>
     </div>
     
     <div v-if="generatedRecipe" class="recipe-result">
@@ -98,6 +107,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useUserStore } from '../stores/userStore'
+import { generateRecipeWithN8N } from '../services/n8nService'
 
 interface Recipe {
   name: string
@@ -107,66 +118,22 @@ interface Recipe {
   ingredients: string[]
   steps: string[]
   tips?: string
+  nutritionInfo?: {
+    calories: number
+    protein: number
+    carbs: number
+    fat: number
+  }
 }
 
+const userStore = useUserStore()
 const availableIngredients = ref('')
 const selectedCuisine = ref('')
 const selectedDifficulty = ref('简单')
 const generatedRecipe = ref<Recipe | null>(null)
 const isLoading = ref(false)
 const error = ref('')
-
-// 菜谱模板库
-const recipeTemplates = [
-  {
-    name: '家常炒肉片',
-    cuisine: '家常菜',
-    difficulty: '简单',
-    cookingTime: '20分钟',
-    ingredients: ['猪肉片 200g', '青椒 1个', '红椒 1个', '姜蒜适量', '生抽 2勺', '料酒 1勺'],
-    steps: [
-      '猪肉切片，用生抽、料酒腌制10分钟',
-      '青椒、红椒切块，姜蒜切末',
-      '热锅凉油，下姜蒜爆香',
-      '放入肉片快速翻炒至变色',
-      '加入青红椒继续翻炒',
-      '调入适量盐和生抽，炒匀即可'
-    ],
-    tips: '肉片要切薄，火候要快，保持肉质嫩滑'
-  },
-  {
-    name: '酸辣土豆丝',
-    cuisine: '川菜',
-    difficulty: '简单',
-    cookingTime: '15分钟',
-    ingredients: ['土豆 2个', '干辣椒 5个', '花椒 1小勺', '醋 2勺', '糖 1勺', '盐适量'],
-    steps: [
-      '土豆去皮切丝，泡水去除淀粉',
-      '干辣椒剪段，准备好花椒',
-      '热锅热油，下花椒、干辣椒爆香',
-      '放入土豆丝快速翻炒',
-      '加入醋、糖、盐调味',
-      '炒至土豆丝变软即可出锅'
-    ],
-    tips: '土豆丝要切细，炒制时间不宜过长'
-  },
-  {
-    name: '番茄炒蛋',
-    cuisine: '家常菜',
-    difficulty: '简单',
-    cookingTime: '10分钟',
-    ingredients: ['鸡蛋 3个', '番茄 2个', '葱花适量', '盐适量', '糖少许'],
-    steps: [
-      '鸡蛋打散，番茄切块',
-      '热锅热油，倒入鸡蛋液炒熟盛出',
-      '锅中留底油，下番茄块翻炒',
-      '加入适量盐和糖，炒出汤汁',
-      '倒入炒好的鸡蛋，翻炒均匀',
-      '撒上葱花即可出锅'
-    ],
-    tips: '番茄要炒出汤汁，糖可以中和酸味'
-  }
-]
+const n8nStatus = ref<any>(null)
 
 const generateRecipe = async () => {
   if (!availableIngredients.value.trim()) {
@@ -178,37 +145,25 @@ const generateRecipe = async () => {
   error.value = ''
   
   try {
-    // 模拟AI生成延迟
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    // 过滤空行和非空食材
+    const ingredients = availableIngredients.value
+      .trim()
+      .split('\n')
+      .filter(ingredient => ingredient.trim() !== '')
     
-    const ingredients = availableIngredients.value.trim().toLowerCase().split('\n')
+    // 调用n8n服务生成菜谱，即使userId获取失败也继续
+    const result = await generateRecipeWithN8N({
+      ingredients: ingredients,
+      cuisine: selectedCuisine.value,
+      difficulty: selectedDifficulty.value,
+      userId: userStore.user?.id
+    })
     
-    // 根据输入匹配最合适的菜谱模板
-    let bestMatch = recipeTemplates[0]
-    let maxMatchCount = 0
-    
-    for (const template of recipeTemplates) {
-      let matchCount = 0
-      for (const ingredient of ingredients) {
-        if (template.ingredients.some(item => item.toLowerCase().includes(ingredient))) {
-          matchCount++
-        }
-      }
-      
-      if (matchCount > maxMatchCount) {
-        maxMatchCount = matchCount
-        bestMatch = template
-      }
+    if (result.success && result.recipe) {
+      generatedRecipe.value = result.recipe
+    } else {
+      throw new Error(result.error || '生成菜谱失败')
     }
-    
-    // 根据用户选择调整菜谱
-    const adjustedRecipe = {
-      ...bestMatch,
-      cuisine: selectedCuisine.value || bestMatch.cuisine,
-      difficulty: selectedDifficulty.value
-    }
-    
-    generatedRecipe.value = adjustedRecipe
     
   } catch (err) {
     error.value = '生成菜谱失败，请重试'
@@ -413,5 +368,99 @@ const saveRecipe = () => {
   border-radius: 6px;
   color: #c33;
   text-align: center;
+}
+
+/* n8n服务状态样式 */
+.service-status {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+}
+
+.status-indicator.connected {
+  background: #e8f5e8;
+  border-color: #51cf66;
+  color: #2b8a3e;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #868e96;
+}
+
+.status-indicator.connected .status-dot {
+  background: #51cf66;
+  animation: pulse 2s infinite;
+}
+
+.fallback-info {
+  font-size: 10px;
+  color: #868e96;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+/* n8n服务状态样式 */
+.service-status {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+}
+
+.status-indicator.connected {
+  background: #e8f5e8;
+  border-color: #51cf66;
+  color: #2b8a3e;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #868e96;
+}
+
+.status-indicator.connected .status-dot {
+  background: #51cf66;
+  animation: pulse 2s infinite;
+}
+
+.fallback-info {
+  font-size: 10px;
+  color: #868e96;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
 }
 </style>

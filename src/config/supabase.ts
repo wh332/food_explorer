@@ -18,7 +18,10 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   },
   global: {
     headers: {
-      'Cache-Control': 'no-cache'
+      'Cache-Control': 'no-cache',
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'apikey': supabaseKey
     }
   }
 })
