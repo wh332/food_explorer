@@ -22,8 +22,8 @@ interface RecipeGenerationResponse {
   error?: string
 }
 
-// 测试成功的webhook URL - 使用相对路径避免CORS
-const N8N_WEBHOOK_URL = '/api/webhood/recipe-generator'
+// 测试成功的webhook URL - 使用本地n8n服务地址
+const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/recipe-generator'
 
 /**
  * 调用n8n工作流生成菜谱
