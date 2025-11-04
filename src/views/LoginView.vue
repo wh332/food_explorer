@@ -42,14 +42,14 @@
             <router-link to="/forgot-password" class="forgot-password">忘记密码？</router-link>
           </div>
 
-          <button type="submit" class="btn btn-primary" :disabled="userStore.isLoading">
-            <span v-if="userStore.isLoading" class="loading-spinner"></span>
-            {{ userStore.isLoading ? '登录中...' : '登录' }}
+          <button type="submit" class="btn btn-primary" :disabled="authStore.isLoading">
+            <span v-if="authStore.isLoading" class="loading-spinner"></span>
+            {{ authStore.isLoading ? '登录中...' : '登录' }}
           </button>
 
-          <div v-if="userStore.error" class="error-message">
+          <div v-if="authStore.error" class="error-message">
             <span class="error-icon">⚠️</span>
-            {{ userStore.error }}
+            {{ authStore.error }}
           </div>
         </form>
 
@@ -64,10 +64,10 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUserStore } from '../stores/userStore'
+import { useAuthStore } from '../stores/authStore'
 
 const router = useRouter()
-const userStore = useUserStore()
+const authStore = useAuthStore()
 
 const form = reactive({
   email: '',
@@ -113,7 +113,7 @@ const handleLogin = async () => {
   if (!validateForm()) return
   
   try {
-    const result = await userStore.signIn(form.email, form.password)
+    const result = await authStore.login(form.email, form.password)
     
     if (result && result.user) {
       console.log('登录成功，用户信息:', result.user.email)
@@ -121,7 +121,7 @@ const handleLogin = async () => {
       router.push('/')
     } else {
       console.error('登录返回结果异常')
-      userStore.error = '登录返回结果异常，请重试'
+      // 错误信息已经在store中设置，这里不需要额外设置
     }
   } catch (error) {
     // 错误处理已经在store中完成
@@ -131,7 +131,7 @@ const handleLogin = async () => {
 
 onMounted(() => {
   // 清除之前的错误
-  userStore.clearError()
+  authStore.clearError()
 })
 </script>
 
@@ -143,6 +143,7 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   padding: 40px 20px;
+  margin-top: -80px; /* 抵消App.vue中的padding-top */
 }
 
 .container {

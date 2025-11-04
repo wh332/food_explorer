@@ -7,18 +7,18 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 // 创建Supabase客户端
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
-    autoRefreshToken: true,
-    persistSession: true,
+    autoRefreshToken: true, // 启用自动刷新
+    persistSession: true, // 启用持久化会话
     detectSessionInUrl: true,
     flowType: 'pkce', // 使用更安全的PKCE流程
-    storageKey: 'food-explorer-auth'
+    storageKey: 'food-explorer-auth-v2' // 使用新的存储键避免缓存冲突
   },
   db: {
     schema: 'public'
   },
   global: {
     headers: {
-      'apikey': supabaseKey
+      'Cache-Control': 'no-cache'
     }
   }
 })

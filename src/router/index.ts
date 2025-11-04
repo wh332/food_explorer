@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { supabase } from '../config/supabase'
+import { useAuthStore } from '../stores/authStore'
 
 const routes = [
   {
@@ -75,38 +75,37 @@ const router = createRouter({
   routes
 })
 
-// 路由守卫 - 检查用户认证状态
-router.beforeEach(async (to, from, next) => {
-  try {
-    // 获取当前用户会话
-    const { data: { session }, error } = await supabase.auth.getSession()
-    
-    if (error) {
-      console.error('获取会话失败:', error)
-      // 如果获取会话失败，重定向到登录页面
-      if (to.meta.requiresAuth) {
-        next('/login')
-        return
-      }
-    }
-    
-    // 如果路由需要认证且用户未登录，重定向到登录页面
-    if (to.meta.requiresAuth && !session) {
-      console.log('路由守卫: 需要认证但未登录，重定向到登录页面')
-      next('/login')
-    } else if (to.path === '/login' && session) {
-      // 如果用户已登录但访问登录页面，重定向到首页
-      console.log('路由守卫: 已登录用户访问登录页面，重定向到首页')
-      next('/')
-    } else {
-      console.log('路由守卫: 允许导航到', to.path)
-      next()
-    }
-  } catch (error) {
-    console.error('路由守卫错误:', error)
-    // 如果发生错误，允许继续导航
+// 简化的路由守卫 - 避免异步阻塞
+router.beforeEach((to, from, next) => {
+  console.log('路由守卫: 开始检查', to.path, '来自', from.path)
+  
+  const authStore = useAuthStore()
+  
+  // 如果是认证相关页面，直接允许访问
+  if (to.path === '/login' || to.path === '/register' || to.path === '/forgot-password') {
+    console.log('路由守卫: 认证页面，直接允许访问')
     next()
+    return
   }
+  
+  // 检查是否需要认证
+  if (to.meta.requiresAuth) {
+    // 如果已认证，允许访问
+    if (authStore.isAuthenticated) {
+      console.log('路由守卫: 已认证用户，允许访问', to.path)
+      next()
+      return
+    }
+    
+    // 如果未认证，重定向到登录页面
+    console.log('路由守卫: 未认证用户，重定向到登录页面')
+    next('/login')
+    return
+  }
+  
+  // 其他页面直接允许访问
+  console.log('路由守卫: 允许访问', to.path)
+  next()
 })
 
 export default router
