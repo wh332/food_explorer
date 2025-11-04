@@ -18,8 +18,10 @@ authStore.initialize().then(() => {
   // 设置认证状态监听器
   authStore.setupListener()
   
+  // 现在挂载应用，路由守卫可以正确获取认证状态
   app.mount('#app')
 }).catch((error) => {
   console.error('应用启动失败:', error)
+  // 即使初始化失败也挂载应用，让用户至少能看到登录页面
   app.mount('#app')
 })

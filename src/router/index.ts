@@ -75,15 +75,31 @@ const router = createRouter({
   routes
 })
 
-// 简化的路由守卫 - 避免异步阻塞
-router.beforeEach((to, from, next) => {
+// 异步路由守卫 - 确保认证状态初始化完成
+router.beforeEach(async (to, from, next) => {
   console.log('路由守卫: 开始检查', to.path, '来自', from.path)
   
   const authStore = useAuthStore()
   
-  // 如果是认证相关页面，直接允许访问
+  // 等待认证状态初始化完成（如果是首次访问）
+  if (!authStore.isAuthenticated && authStore.isLoading) {
+    console.log('路由守卫: 等待认证状态初始化...')
+    // 等待一小段时间让认证状态初始化完成
+    await new Promise(resolve => setTimeout(resolve, 100))
+  }
+  
+  console.log('路由守卫: 当前认证状态', authStore.isAuthenticated)
+  
+  // 如果是认证相关页面
   if (to.path === '/login' || to.path === '/register' || to.path === '/forgot-password') {
-    console.log('路由守卫: 认证页面，直接允许访问')
+    // 如果用户已登录，重定向到首页
+    if (authStore.isAuthenticated) {
+      console.log('路由守卫: 已登录用户访问认证页面，重定向到首页')
+      next('/')
+      return
+    }
+    
+    console.log('路由守卫: 认证页面，允许访问')
     next()
     return
   }
