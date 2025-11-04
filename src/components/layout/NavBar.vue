@@ -17,6 +17,34 @@
         <router-link to="/cuisines" class="nav-link">八大菜系</router-link>
         <router-link to="/dishes" class="nav-link">家常菜</router-link>
         
+        <!-- 实用工具菜单 -->
+        <div class="tools-menu">
+          <button class="nav-link tools-toggle" @click="toggleToolsMenu">
+            <span class="tools-icon">🛠️</span>
+            实用工具
+            <span class="dropdown-arrow">▼</span>
+          </button>
+          
+          <div v-if="isToolsMenuOpen" class="tools-dropdown">
+            <router-link to="/tools/nutrition" class="dropdown-item" @click="closeToolsMenu">
+              <span class="tool-icon">📊</span>
+              营养计算器
+            </router-link>
+            <router-link to="/tools/recipe-generator" class="dropdown-item" @click="closeToolsMenu">
+              <span class="tool-icon">🍳</span>
+              菜谱生成器
+            </router-link>
+            <router-link to="/tools/shopping-list" class="dropdown-item" @click="closeToolsMenu">
+              <span class="tool-icon">🛒</span>
+              购物清单
+            </router-link>
+            <router-link to="/tools/cooking-timer" class="dropdown-item" @click="closeToolsMenu">
+              <span class="tool-icon">⏱️</span>
+              烹饪计时器
+            </router-link>
+          </div>
+        </div>
+        
         <!-- 已登录用户菜单 -->
         <template v-if="userStore.isAuthenticated">
           <router-link to="/favorites" class="nav-link favorites-link">
@@ -79,6 +107,7 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const isUserMenuOpen = ref(false)
+const isToolsMenuOpen = ref(false)
 
 // 计算用户首字母
 const userInitials = computed(() => {
@@ -88,6 +117,16 @@ const userInitials = computed(() => {
 
 const toggleUserMenu = () => {
   isUserMenuOpen.value = !isUserMenuOpen.value
+  isToolsMenuOpen.value = false
+}
+
+const toggleToolsMenu = () => {
+  isToolsMenuOpen.value = !isToolsMenuOpen.value
+  isUserMenuOpen.value = false
+}
+
+const closeToolsMenu = () => {
+  isToolsMenuOpen.value = false
 }
 
 const handleLogout = async () => {
@@ -105,6 +144,9 @@ const closeUserMenu = (event: Event) => {
   const target = event.target as HTMLElement
   if (!target.closest('.user-menu')) {
     isUserMenuOpen.value = false
+  }
+  if (!target.closest('.tools-menu')) {
+    isToolsMenuOpen.value = false
   }
 }
 
@@ -239,6 +281,72 @@ onMounted(() => {
 
 .login-icon, .register-icon {
   margin-right: 4px;
+}
+
+/* 工具菜单样式 */
+.tools-menu {
+  position: relative;
+}
+
+.tools-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #666;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.tools-toggle:hover {
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+}
+
+.tools-icon {
+  margin-right: 4px;
+}
+
+.tools-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  min-width: 200px;
+  z-index: 1001;
+  margin-top: 8px;
+}
+
+.tools-dropdown .dropdown-item {
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #666;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.tools-dropdown .dropdown-item:hover {
+  background: #f8f9fa;
+  color: #ff6b6b;
+}
+
+.tool-icon {
+  font-size: 1rem;
 }
 
 /* 用户菜单样式 */

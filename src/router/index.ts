@@ -67,6 +67,102 @@ const routes = [
     name: 'Favorites',
     component: () => import('../views/FavoritesView.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/tools/nutrition',
+    name: 'NutritionCalculator',
+    component: () => import('../views/tools/NutritionCalculatorView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/tools/recipe-generator',
+    name: 'RecipeGenerator',
+    component: () => import('../views/tools/RecipeGeneratorView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/tools/shopping-list',
+    name: 'ShoppingList',
+    component: () => import('../views/tools/ShoppingListView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/tools/cooking-timer',
+    name: 'CookingTimer',
+    component: () => import('../views/tools/CookingTimerView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/tools/nutrition',
+    name: 'NutritionCalculator',
+    component: () => import('../views/tools/NutritionCalculatorView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/tools/recipe-generator',
+    name: 'RecipeGenerator',
+    component: () => import('../views/tools/RecipeGeneratorView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/tools/shopping-list',
+    name: 'ShoppingList',
+    component: () => import('../views/tools/ShoppingListView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/tools/cooking-timer',
+    name: 'CookingTimer',
+    component: () => import('../views/tools/CookingTimerView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/tools/nutrition',
+    name: 'NutritionCalculator',
+    component: () => import('../views/tools/NutritionCalculatorView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/tools/recipe-generator',
+    name: 'RecipeGenerator',
+    component: () => import('../views/tools/RecipeGeneratorView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/tools/shopping-list',
+    name: 'ShoppingList',
+    component: () => import('../views/tools/ShoppingListView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/tools/cooking-timer',
+    name: 'CookingTimer',
+    component: () => import('../views/tools/CookingTimerView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/tools/nutrition',
+    name: 'NutritionCalculator',
+    component: () => import('../views/tools/NutritionCalculatorView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/tools/recipe-generator',
+    name: 'RecipeGenerator',
+    component: () => import('../views/tools/RecipeGeneratorView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/tools/shopping-list',
+    name: 'ShoppingList',
+    component: () => import('../views/tools/ShoppingListView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/tools/cooking-timer',
+    name: 'CookingTimer',
+    component: () => import('../views/tools/CookingTimerView.vue'),
+    meta: { requiresAuth: true }
   }
 ]
 
