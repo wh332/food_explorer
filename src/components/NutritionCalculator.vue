@@ -149,8 +149,26 @@
         
         <!-- 营养平衡总结 -->
         <div v-if="nutritionResult.analysis.balance" class="balance-section">
-          <h6>营养平衡</h6>
-          <p>{{ nutritionResult.analysis.balance }}</p>
+          <h6>🔄 营养平衡</h6>
+          <div class="balance-content">
+            <div v-if="nutritionResult.analysis.balance.summary" class="balance-summary">
+              <strong>{{ nutritionResult.analysis.balance.summary }}</strong>
+            </div>
+            <div v-if="nutritionResult.analysis.balance.details" class="balance-details">
+              <div v-if="nutritionResult.analysis.balance.details.energy" class="balance-detail">
+                <span class="detail-label">能量:</span>
+                <span>{{ nutritionResult.analysis.balance.details.energy }}</span>
+              </div>
+              <div v-if="nutritionResult.analysis.balance.details.macronutrients" class="balance-detail">
+                <span class="detail-label">宏量营养素:</span>
+                <span>{{ nutritionResult.analysis.balance.details.macronutrients }}</span>
+              </div>
+              <div v-if="nutritionResult.analysis.balance.details.micronutrients" class="balance-detail">
+                <span class="detail-label">微量营养素:</span>
+                <span>{{ nutritionResult.analysis.balance.details.micronutrients }}</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- 亮点营养素 -->
@@ -176,10 +194,13 @@
         </div>
 
         <!-- 适合的饮食类型 -->
-        <div v-if="nutritionResult.analysis.dietType" class="diet-type-section">
+        <div v-if="nutritionResult.analysis.dietType && nutritionResult.analysis.dietType.length > 0" class="diet-type-section">
           <h6>🥗 适合的饮食类型</h6>
-          <div class="diet-type-item">
-            {{ nutritionResult.analysis.dietType }}
+          <div class="diet-type-list">
+            <div v-for="(diet, index) in nutritionResult.analysis.dietType" :key="index" class="diet-type-item">
+              <div class="diet-bullet">🥗</div>
+              <div class="diet-content">{{ diet }}</div>
+            </div>
           </div>
         </div>
       </div>
@@ -221,6 +242,20 @@ import {
   validateIngredients
 } from '../services/nutritionService'
 
+interface NutritionAnalysis {
+  balance?: {
+    summary?: string
+    details?: {
+      energy?: string
+      macronutrients?: string
+      micronutrients?: string
+    }
+  }
+  highlights?: string[]
+  recommendations?: string[]
+  dietType?: string[]
+}
+
 interface NutritionResult {
   calories: number
   protein: number
@@ -234,12 +269,7 @@ interface NutritionResult {
   vitaminC?: number
   calcium?: number
   iron?: number
-  analysis?: {
-    balance?: string
-    highlights?: string[]
-    recommendations?: string[]
-    dietType?: string
-  }
+  analysis?: NutritionAnalysis
   perServing?: {
     calories: number
     protein: number
@@ -490,10 +520,25 @@ const calculateNutrition = async () => {
   margin-bottom: 16px;
 }
 
-.balance-section p {
-  color: #666;
-  line-height: 1.6;
-  margin: 0;
+.balance-summary {
+  margin-bottom: 12px;
+}
+
+.balance-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.balance-detail {
+  display: flex;
+  gap: 8px;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #333;
+  min-width: 80px;
 }
 
 .highlights-section {
@@ -577,10 +622,34 @@ const calculateNutrition = async () => {
   border-radius: 8px;
 }
 
+.diet-type-list {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
 .diet-type-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.diet-type-item:last-child {
+  border-bottom: none;
+}
+
+.diet-bullet {
   color: #1565c0;
-  font-weight: 600;
+  font-size: 16px;
+  margin-right: 12px;
+  min-width: 16px;
+}
+
+.diet-content {
+  color: #333;
   line-height: 1.5;
+  flex: 1;
 }
 
 /* 食材表格样式 */
@@ -693,10 +762,25 @@ const calculateNutrition = async () => {
   margin-bottom: 16px;
 }
 
-.balance-section p {
-  color: #666;
-  line-height: 1.6;
-  margin: 0;
+.balance-summary {
+  margin-bottom: 12px;
+}
+
+.balance-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.balance-detail {
+  display: flex;
+  gap: 8px;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #333;
+  min-width: 80px;
 }
 
 .highlights-section {
@@ -780,10 +864,34 @@ const calculateNutrition = async () => {
   border-radius: 8px;
 }
 
+.diet-type-list {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
 .diet-type-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.diet-type-item:last-child {
+  border-bottom: none;
+}
+
+.diet-bullet {
   color: #1565c0;
-  font-weight: 600;
+  font-size: 16px;
+  margin-right: 12px;
+  min-width: 16px;
+}
+
+.diet-content {
+  color: #333;
   line-height: 1.5;
+  flex: 1;
 }
 
 /* 食材表格样式 */
