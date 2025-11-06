@@ -7,17 +7,64 @@
     
     <div class="calculator-form">
       <div class="input-group">
-        <label for="ingredients">食材列表（每行一个）</label>
-        <textarea 
-          id="ingredients"
-          v-model="ingredients"
-          placeholder="例如：
-猪肉 200g
-白菜 300g
-盐 5g
-..."
-          rows="6"
-        ></textarea>
+        <label>食材列表</label>
+        <div class="ingredients-table">
+          <div class="table-header">
+            <div class="col-name">食材名称</div>
+            <div class="col-amount">数量</div>
+            <div class="col-unit">单位</div>
+            <div class="col-actions">操作</div>
+          </div>
+          <div 
+            v-for="(ingredient, index) in ingredientsList" 
+            :key="index" 
+            class="table-row"
+          >
+            <div class="col-name">
+              <input 
+                type="text" 
+                v-model="ingredient.name" 
+                placeholder="如：猪肉"
+                @input="validateIngredient(ingredient)"
+              >
+            </div>
+            <div class="col-amount">
+              <input 
+                type="number" 
+                v-model.number="ingredient.amount" 
+                min="0" 
+                step="0.1"
+                placeholder="200"
+                @input="validateIngredient(ingredient)"
+              >
+            </div>
+            <div class="col-unit">
+              <select v-model="ingredient.unit" @change="validateIngredient(ingredient)">
+                <option value="g">g</option>
+                <option value="kg">kg</option>
+                <option value="ml">ml</option>
+                <option value="l">l</option>
+                <option value="个">个</option>
+                <option value="片">片</option>
+                <option value="瓣">瓣</option>
+                <option value="根">根</option>
+                <option value="把">把</option>
+                <option value="勺">勺</option>
+                <option value="杯">杯</option>
+              </select>
+            </div>
+            <div class="col-actions">
+              <button 
+                @click="removeIngredient(index)" 
+                class="btn-remove"
+                :disabled="ingredientsList.length <= 1"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+          <button @click="addIngredient" class="btn-add">+ 添加食材</button>
+        </div>
       </div>
       
       <div class="input-group">
@@ -31,7 +78,7 @@
         >
       </div>
       
-      <button @click="calculateNutrition" class="btn-calculate" :disabled="!ingredients">
+      <button @click="calculateNutrition" class="btn-calculate" :disabled="!hasValidIngredients">
         {{ isLoading ? '计算中...' : '计算营养' }}
       </button>
     </div>
@@ -64,6 +111,101 @@
           <span class="value">{{ nutritionResult.sugar }}g</span>
         </div>
       </div>
+      
+      <!-- 额外的营养信息 -->
+      <div v-if="nutritionResult.sodium || nutritionResult.cholesterol" class="additional-nutrition">
+        <h5>其他营养信息</h5>
+        <div class="nutrition-grid">
+          <div v-if="nutritionResult.sodium" class="nutrition-item">
+            <span class="label">钠</span>
+            <span class="value">{{ nutritionResult.sodium }}mg</span>
+          </div>
+          <div v-if="nutritionResult.cholesterol" class="nutrition-item">
+            <span class="label">胆固醇</span>
+            <span class="value">{{ nutritionResult.cholesterol }}mg</span>
+          </div>
+          <div v-if="nutritionResult.vitaminA" class="nutrition-item">
+            <span class="label">维生素A</span>
+            <span class="value">{{ nutritionResult.vitaminA }}μg</span>
+          </div>
+          <div v-if="nutritionResult.vitaminC" class="nutrition-item">
+            <span class="label">维生素C</span>
+            <span class="value">{{ nutritionResult.vitaminC }}mg</span>
+          </div>
+          <div v-if="nutritionResult.calcium" class="nutrition-item">
+            <span class="label">钙</span>
+            <span class="value">{{ nutritionResult.calcium }}mg</span>
+          </div>
+          <div v-if="nutritionResult.iron" class="nutrition-item">
+            <span class="label">铁</span>
+            <span class="value">{{ nutritionResult.iron }}mg</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 营养分析 -->
+      <div v-if="nutritionResult.analysis" class="nutrition-analysis">
+        <h5>📊 营养分析</h5>
+        
+        <!-- 营养平衡总结 -->
+        <div v-if="nutritionResult.analysis.balance" class="balance-section">
+          <h6>营养平衡</h6>
+          <p>{{ nutritionResult.analysis.balance }}</p>
+        </div>
+
+        <!-- 亮点营养素 -->
+        <div v-if="nutritionResult.analysis.highlights && nutritionResult.analysis.highlights.length > 0" class="highlights-section">
+          <h6>✨ 亮点营养素</h6>
+          <div class="highlights-list">
+            <div v-for="(highlight, index) in nutritionResult.analysis.highlights" :key="index" class="highlight-item">
+              <div class="highlight-bullet">•</div>
+              <div class="highlight-content">{{ highlight }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 饮食建议 -->
+        <div v-if="nutritionResult.analysis.recommendations && nutritionResult.analysis.recommendations.length > 0" class="recommendations-section">
+          <h6>💡 饮食建议</h6>
+          <div class="recommendations-list">
+            <div v-for="(recommendation, index) in nutritionResult.analysis.recommendations" :key="index" class="recommendation-item">
+              <div class="recommendation-number">{{ index + 1 }}</div>
+              <div class="recommendation-content">{{ recommendation }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 适合的饮食类型 -->
+        <div v-if="nutritionResult.analysis.dietType" class="diet-type-section">
+          <h6>🥗 适合的饮食类型</h6>
+          <div class="diet-type-item">
+            {{ nutritionResult.analysis.dietType }}
+          </div>
+        </div>
+      </div>
+
+      <!-- 每份营养信息 -->
+      <div v-if="nutritionResult.perServing" class="per-serving-section">
+        <h5>🍽️ 每份营养信息</h5>
+        <div class="nutrition-grid">
+          <div class="nutrition-item">
+            <span class="label">热量</span>
+            <span class="value">{{ nutritionResult.perServing.calories }} kcal</span>
+          </div>
+          <div class="nutrition-item">
+            <span class="label">蛋白质</span>
+            <span class="value">{{ nutritionResult.perServing.protein }}g</span>
+          </div>
+          <div class="nutrition-item">
+            <span class="label">碳水化合物</span>
+            <span class="value">{{ nutritionResult.perServing.carbs }}g</span>
+          </div>
+          <div class="nutrition-item">
+            <span class="label">脂肪</span>
+            <span class="value">{{ nutritionResult.perServing.fat }}g</span>
+          </div>
+        </div>
+      </div>
     </div>
     
     <div v-if="error" class="error-message">
@@ -73,7 +215,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { 
+  calculateNutritionWithN8N, 
+  validateIngredients
+} from '../services/nutritionService'
 
 interface NutritionResult {
   calories: number
@@ -82,30 +228,84 @@ interface NutritionResult {
   fat: number
   fiber: number
   sugar: number
+  sodium?: number
+  cholesterol?: number
+  vitaminA?: number
+  vitaminC?: number
+  calcium?: number
+  iron?: number
+  analysis?: {
+    balance?: string
+    highlights?: string[]
+    recommendations?: string[]
+    dietType?: string
+  }
+  perServing?: {
+    calories: number
+    protein: number
+    carbs: number
+    fat: number
+  }
 }
 
-const ingredients = ref('')
+interface IngredientItem {
+  name: string
+  amount: number
+  unit: string
+}
+
+const ingredientsList = ref<IngredientItem[]>([
+  { name: '', amount: 0, unit: 'g' }
+])
 const servings = ref(1)
 const nutritionResult = ref<NutritionResult | null>(null)
 const isLoading = ref(false)
 const error = ref('')
 
-// 模拟营养数据库
-const nutritionDatabase = {
-  '猪肉': { calories: 242, protein: 25, carbs: 0, fat: 16, fiber: 0, sugar: 0 },
-  '牛肉': { calories: 250, protein: 26, carbs: 0, fat: 15, fiber: 0, sugar: 0 },
-  '鸡肉': { calories: 165, protein: 31, carbs: 0, fat: 3.6, fiber: 0, sugar: 0 },
-  '白菜': { calories: 13, protein: 1.5, carbs: 2.3, fat: 0.1, fiber: 1, sugar: 1.2 },
-  '土豆': { calories: 77, protein: 2, carbs: 17, fat: 0.1, fiber: 2.2, sugar: 0.8 },
-  '米饭': { calories: 130, protein: 2.7, carbs: 28, fat: 0.3, fiber: 0.4, sugar: 0.1 },
-  '盐': { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0 },
-  '油': { calories: 884, protein: 0, carbs: 0, fat: 100, fiber: 0, sugar: 0 },
-  '糖': { calories: 387, protein: 0, carbs: 100, fat: 0, fiber: 0, sugar: 100 }
+// 计算属性：检查是否有有效的食材
+const hasValidIngredients = computed(() => {
+  return ingredientsList.value.some(ingredient => 
+    ingredient.name.trim() && ingredient.amount > 0
+  )
+})
+
+const addIngredient = () => {
+  ingredientsList.value.push({ name: '', amount: 0, unit: 'g' })
+}
+
+const removeIngredient = (index: number) => {
+  if (ingredientsList.value.length > 1) {
+    ingredientsList.value.splice(index, 1)
+  }
+}
+
+const validateIngredient = (ingredient: IngredientItem) => {
+  // 实时验证食材数据
+  if (ingredient.name && ingredient.amount > 0) {
+    // 数据有效
+  }
+}
+
+// 获取适合度样式类
+const getSuitabilityClass = (suitability: string) => {
+  switch (suitability) {
+    case '高': return 'suitability-high'
+    case '中高': return 'suitability-medium-high'
+    case '中等': return 'suitability-medium'
+    case '中低': return 'suitability-medium-low'
+    case '低': return 'suitability-low'
+    default: return 'suitability-medium'
+  }
 }
 
 const calculateNutrition = async () => {
-  if (!ingredients.value.trim()) {
-    error.value = '请输入食材列表'
+  // 过滤掉空行
+  const validIngredients = ingredientsList.value.filter(ingredient => 
+    ingredient.name.trim() && ingredient.amount > 0
+  )
+  
+  if (validIngredients.length === 0) {
+    error.value = '请输入至少一种有效的食材'
     return
   }
   
@@ -114,53 +314,28 @@ const calculateNutrition = async () => {
   nutritionResult.value = null
   
   try {
-    // 模拟API调用延迟
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    const lines = ingredients.value.trim().split('\n')
-    let totalNutrition = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0 }
-    let foundIngredients = 0
-    
-    for (const line of lines) {
-      const match = line.match(/([\u4e00-\u9fff\w\s]+)\s*(\d+)(g|kg|ml|l)?/i)
-      if (match) {
-        const ingredientName = match[1].trim().toLowerCase()
-        const amount = parseInt(match[2])
-        const unit = match[3] || 'g'
-        
-        // 查找匹配的食材
-        for (const [name, nutrition] of Object.entries(nutritionDatabase)) {
-          if (name.toLowerCase().includes(ingredientName) || ingredientName.includes(name.toLowerCase())) {
-            const multiplier = unit === 'kg' ? 1000 : 1
-            const normalizedAmount = amount * multiplier
-            
-            totalNutrition.calories += (nutrition.calories * normalizedAmount) / 100
-            totalNutrition.protein += (nutrition.protein * normalizedAmount) / 100
-            totalNutrition.carbs += (nutrition.carbs * normalizedAmount) / 100
-            totalNutrition.fat += (nutrition.fat * normalizedAmount) / 100
-            totalNutrition.fiber += (nutrition.fiber * normalizedAmount) / 100
-            totalNutrition.sugar += (nutrition.sugar * normalizedAmount) / 100
-            
-            foundIngredients++
-            break
-          }
-        }
-      }
-    }
-    
-    if (foundIngredients === 0) {
-      error.value = '未找到匹配的食材数据，请检查输入格式'
+    // 验证食材格式
+    const validation = validateIngredients(validIngredients)
+    if (!validation.isValid) {
+      error.value = validation.errors.join('，')
       return
     }
     
-    // 按份数计算
-    nutritionResult.value = {
-      calories: Math.round(totalNutrition.calories / servings.value),
-      protein: Math.round(totalNutrition.protein / servings.value * 10) / 10,
-      carbs: Math.round(totalNutrition.carbs / servings.value * 10) / 10,
-      fat: Math.round(totalNutrition.fat / servings.value * 10) / 10,
-      fiber: Math.round(totalNutrition.fiber / servings.value * 10) / 10,
-      sugar: Math.round(totalNutrition.sugar / servings.value * 10) / 10
+    // 调用n8n服务计算营养
+    const result = await calculateNutritionWithN8N({
+      ingredients: validIngredients,
+      servings: servings.value
+    })
+    
+    if (result.success && result.nutrition) {
+      // 合并nutrition数据以及analysis和perServing数据
+      nutritionResult.value = {
+        ...result.nutrition,
+        analysis: result.analysis,
+        perServing: result.perServing
+      }
+    } else {
+      error.value = result.error || '营养计算失败'
     }
     
   } catch (err) {
@@ -289,5 +464,411 @@ const calculateNutrition = async () => {
   border-radius: 6px;
   color: #c33;
   text-align: center;
+}
+
+/* 营养分析样式 */
+.nutrition-analysis {
+  margin-top: 20px;
+}
+
+.nutrition-analysis h5 {
+  color: #333;
+  margin-bottom: 16px;
+  font-size: 18px;
+}
+
+.nutrition-analysis h6 {
+  color: #555;
+  margin: 16px 0 8px 0;
+  font-size: 16px;
+}
+
+.balance-section {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.balance-section p {
+  color: #666;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.highlights-section {
+  margin-bottom: 16px;
+}
+
+.highlights-list {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.highlight-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.highlight-item:last-child {
+  border-bottom: none;
+}
+
+.highlight-bullet {
+  color: #28a745;
+  font-size: 16px;
+  margin-right: 12px;
+  min-width: 16px;
+}
+
+.highlight-content {
+  color: #333;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.recommendations-section {
+  margin-bottom: 16px;
+}
+
+.recommendations-list {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.recommendation-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.recommendation-item:last-child {
+  border-bottom: none;
+}
+
+.recommendation-number {
+  background: #667eea;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  margin-right: 12px;
+  min-width: 24px;
+}
+
+.recommendation-content {
+  color: #333;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.diet-type-section {
+  background: #e3f2fd;
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.diet-type-item {
+  color: #1565c0;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+/* 食材表格样式 */
+.ingredients-table {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 0.5fr;
+  gap: 8px;
+  padding: 12px;
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 0.5fr;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  align-items: center;
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.col-name input,
+.col-amount input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.col-unit select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background: white;
+}
+
+.btn-remove {
+  background: #ff6b6b;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  min-width: 24px;
+  min-height: 24px;
+}
+
+.btn-remove:hover:not(:disabled) {
+  background: #ff5252;
+}
+
+.btn-remove:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.btn-add {
+  width: 100%;
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 0 0 8px 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-add:hover {
+  background: #218838;
+}
+
+/* 营养分析样式 */
+.nutrition-analysis {
+  margin-top: 20px;
+}
+
+.nutrition-analysis h5 {
+  color: #333;
+  margin-bottom: 16px;
+  font-size: 18px;
+}
+
+.nutrition-analysis h6 {
+  color: #555;
+  margin: 16px 0 8px 0;
+  font-size: 16px;
+}
+
+.balance-section {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.balance-section p {
+  color: #666;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.highlights-section {
+  margin-bottom: 16px;
+}
+
+.highlights-list {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.highlight-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.highlight-item:last-child {
+  border-bottom: none;
+}
+
+.highlight-bullet {
+  color: #28a745;
+  font-size: 16px;
+  margin-right: 12px;
+  min-width: 16px;
+}
+
+.highlight-content {
+  color: #333;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.recommendations-section {
+  margin-bottom: 16px;
+}
+
+.recommendations-list {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.recommendation-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.recommendation-item:last-child {
+  border-bottom: none;
+}
+
+.recommendation-number {
+  background: #667eea;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  margin-right: 12px;
+  min-width: 24px;
+}
+
+.recommendation-content {
+  color: #333;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.diet-type-section {
+  background: #e3f2fd;
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.diet-type-item {
+  color: #1565c0;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+/* 食材表格样式 */
+.ingredients-table {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 0.5fr;
+  gap: 8px;
+  padding: 12px;
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 0.5fr;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  align-items: center;
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.col-name input,
+.col-amount input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.col-unit select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background: white;
+}
+
+.btn-remove {
+  background: #ff6b6b;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  min-width: 24px;
+  min-height: 24px;
+}
+
+.btn-remove:hover:not(:disabled) {
+  background: #ff5252;
+}
+
+.btn-remove:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.btn-add {
+  width: 100%;
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 0 0 8px 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-add:hover {
+  background: #218838;
 }
 </style>
