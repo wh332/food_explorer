@@ -81,6 +81,10 @@
       <button @click="calculateNutrition" class="btn-calculate" :disabled="!hasValidIngredients">
         {{ isLoading ? '计算中...' : '计算营养' }}
       </button>
+      
+      <button v-if="nutritionResult" @click="addToShoppingList" class="btn-add-to-list">
+        🛒 添加到购物清单
+      </button>
     </div>
     
     <div v-if="nutritionResult" class="nutrition-result">
@@ -375,6 +379,46 @@ const calculateNutrition = async () => {
     isLoading.value = false
   }
 }
+
+// 添加到购物清单
+const addToShoppingList = () => {
+  const validIngredients = ingredientsList.value.filter(ingredient => 
+    ingredient.name.trim() && ingredient.amount > 0
+  )
+  
+  if (validIngredients.length === 0) {
+    error.value = '没有有效的食材可以添加到购物清单'
+    return
+  }
+  
+  // 转换为购物清单格式
+  const shoppingListItems = validIngredients.map(ingredient => 
+    `${ingredient.name} ${ingredient.amount}${ingredient.unit}`
+  )
+  
+  // 将食材添加到本地存储的购物清单
+  try {
+    const existingList = JSON.parse(localStorage.getItem('shoppingList') || '[]')
+    const newItems = shoppingListItems.map(item => ({
+      id: Math.random().toString(36).substr(2, 9),
+      name: item.split(' ')[0],
+      quantity: item.split(' ').slice(1).join(' '),
+      checked: false
+    }))
+    
+    const updatedList = [...existingList, ...newItems]
+    localStorage.setItem('shoppingList', JSON.stringify(updatedList))
+    
+    // 提示用户
+    alert('食材已添加到购物清单！可以去购物清单页面查看。')
+    
+    // 可以添加路由跳转或直接打开购物清单
+    // 这里我们暂时只显示成功消息
+  } catch (error) {
+    console.error('添加到购物清单失败:', error)
+    alert('添加到购物清单失败，请重试')
+  }
+}
 </script>
 
 <style scoped>
@@ -447,6 +491,24 @@ const calculateNutrition = async () => {
 .btn-calculate:disabled {
   background: #ccc;
   cursor: not-allowed;
+}
+
+.btn-add-to-list {
+  width: 100%;
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 12px;
+}
+
+.btn-add-to-list:hover {
+  background: #218838;
 }
 
 .nutrition-result {
