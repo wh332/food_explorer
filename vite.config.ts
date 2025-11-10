@@ -1,24 +1,22 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
   plugins: [vue()],
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url))
+    }
+  },
   server: {
-    port: 3000,
-    host: true, // 允许外部访问
-    open: true
-  },
-  optimizeDeps: {
-    include: ['@supabase/supabase-js']
-  },
-  build: {
-    commonjsOptions: {
-      transformMixedEsModules: true,
-      esmExternals: true
-    },
-    rollupOptions: {
-      external: [],
-      plugins: []
+    port: 3001,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5678',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '/webhook-test')
+      }
     }
   }
 })

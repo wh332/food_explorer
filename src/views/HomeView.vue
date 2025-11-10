@@ -70,26 +70,12 @@
       </div>
     </div>
 
-    <!-- 工具组件 -->
-    <div class="tools-section">
-      <div class="container">
-        <h2>实用工具</h2>
-        <div class="tools-grid">
-          <div class="tool-card">
-            <ShoppingList />
-          </div>
-          <div class="tool-card">
-            <CookingTimer />
-          </div>
-        </div>
-      </div>
-    </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
-import ShoppingList from '../components/ShoppingList.vue'
-import CookingTimer from '../components/CookingTimer.vue'
+
 </script>
 
 <style scoped>

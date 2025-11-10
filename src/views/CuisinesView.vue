@@ -28,7 +28,7 @@
             <div class="representative-dishes">
               <h4>代表菜品</h4>
               <div class="dishes-list">
-                <span v-for="dish in cuisine.representativeDishes" :key="dish" class="dish-tag">
+                <span v-for="dish in cuisine.representative_dishes" :key="dish" class="dish-tag">
                   {{ dish }}
                 </span>
               </div>
@@ -42,7 +42,7 @@
                 :item-id="cuisine.id"
                 item-type="cuisine"
                 :item-name="cuisine.name"
-                :item-image="cuisine.image"
+                :item-image="cuisine.image_url"
               />
             </div>
           </div>
@@ -80,7 +80,7 @@ const getCuisineEmoji = (name: string) => {
 
 const getCuisineImage = (name: string) => {
   const cuisine = foodStore.cuisines.find(c => c.name === name)
-  return cuisine?.image || 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=300&fit=crop&auto=format'
+  return cuisine?.image_url || 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=300&fit=crop&auto=format'
 }
 
 const viewCuisineDishes = (cuisineName: string) => {
