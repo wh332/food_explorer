@@ -16,14 +16,7 @@ interface NutritionCalculationResponse {
   success: boolean
   nutrition?: NutritionInfo
   analysis?: {
-    balance?: {
-      summary?: string
-      details?: {
-        energy?: string
-        macronutrients?: string
-        micronutrients?: string
-      }
-    }
+    balance?: string
     highlights?: string[]
     recommendations?: string[]
     dietType?: string[]

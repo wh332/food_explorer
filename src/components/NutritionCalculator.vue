@@ -151,37 +151,46 @@
       <div v-if="nutritionResult.analysis" class="nutrition-analysis">
         <h5>📊 营养分析</h5>
         
-        <!-- 营养平衡总结 -->
+        <!-- 营养平衡评估 -->
         <div v-if="nutritionResult.analysis.balance" class="balance-section">
-          <h6>🔄 营养平衡</h6>
+          <h6>⚖️ 营养平衡评估</h6>
           <div class="balance-content">
-            <div v-if="nutritionResult.analysis.balance.summary" class="balance-summary">
-              <strong>{{ nutritionResult.analysis.balance.summary }}</strong>
-            </div>
-            <div v-if="nutritionResult.analysis.balance.details" class="balance-details">
-              <div v-if="nutritionResult.analysis.balance.details.energy" class="balance-detail">
-                <span class="detail-label">能量:</span>
-                <span>{{ nutritionResult.analysis.balance.details.energy }}</span>
+            <template v-if="typeof nutritionResult.analysis.balance === 'object'">
+              <div class="balance-summary">
+                {{ nutritionResult.analysis.balance.summary }}
               </div>
-              <div v-if="nutritionResult.analysis.balance.details.macronutrients" class="balance-detail">
-                <span class="detail-label">宏量营养素:</span>
-                <span>{{ nutritionResult.analysis.balance.details.macronutrients }}</span>
+              <div v-if="nutritionResult.analysis.balance.details" class="balance-details">
+                <div v-if="nutritionResult.analysis.balance.details.energy" class="detail-item">
+                  <strong>能量:</strong> {{ nutritionResult.analysis.balance.details.energy }}
+                </div>
+                <div v-if="nutritionResult.analysis.balance.details.macronutrients" class="detail-item">
+                  <strong>宏量营养素:</strong> {{ nutritionResult.analysis.balance.details.macronutrients }}
+                </div>
+                <div v-if="nutritionResult.analysis.balance.details.micronutrients" class="detail-item">
+                  <strong>微量营养素:</strong> {{ nutritionResult.analysis.balance.details.micronutrients }}
+                </div>
               </div>
-              <div v-if="nutritionResult.analysis.balance.details.micronutrients" class="balance-detail">
-                <span class="detail-label">微量营养素:</span>
-                <span>{{ nutritionResult.analysis.balance.details.micronutrients }}</span>
-              </div>
-            </div>
+            </template>
+            <template v-else>
+              {{ nutritionResult.analysis.balance }}
+            </template>
           </div>
         </div>
-
+        
         <!-- 亮点营养素 -->
         <div v-if="nutritionResult.analysis.highlights && nutritionResult.analysis.highlights.length > 0" class="highlights-section">
           <h6>✨ 亮点营养素</h6>
           <div class="highlights-list">
             <div v-for="(highlight, index) in nutritionResult.analysis.highlights" :key="index" class="highlight-item">
               <div class="highlight-bullet">•</div>
-              <div class="highlight-content">{{ highlight }}</div>
+              <div class="highlight-content">
+                <template v-if="typeof highlight === 'object'">
+                  <strong>{{ highlight.nutrient }}</strong>: {{ highlight.amount }} ({{ highlight.percentage }}) - {{ highlight.benefit }}
+                </template>
+                <template v-else>
+                  {{ highlight }}
+                </template>
+              </div>
             </div>
           </div>
         </div>
@@ -192,7 +201,14 @@
           <div class="recommendations-list">
             <div v-for="(recommendation, index) in nutritionResult.analysis.recommendations" :key="index" class="recommendation-item">
               <div class="recommendation-number">{{ index + 1 }}</div>
-              <div class="recommendation-content">{{ recommendation }}</div>
+              <div class="recommendation-content">
+                <template v-if="typeof recommendation === 'object'">
+                  <strong>{{ recommendation.type }}</strong>: {{ recommendation.suggestion }}
+                </template>
+                <template v-else>
+                  {{ recommendation }}
+                </template>
+              </div>
             </div>
           </div>
         </div>
@@ -203,7 +219,14 @@
           <div class="diet-type-list">
             <div v-for="(diet, index) in nutritionResult.analysis.dietType" :key="index" class="diet-type-item">
               <div class="diet-bullet">🥗</div>
-              <div class="diet-content">{{ diet }}</div>
+              <div class="diet-content">
+                <template v-if="typeof diet === 'object'">
+                  <strong>{{ diet.type }}</strong> (适合度: <span :class="getSuitabilityClass(diet.suitability)">{{ diet.suitability }}</span>) - {{ diet.reason }}
+                </template>
+                <template v-else>
+                  {{ diet }}
+                </template>
+              </div>
             </div>
           </div>
         </div>
@@ -247,7 +270,7 @@ import {
 } from '../services/nutritionService'
 
 interface NutritionAnalysis {
-  balance?: {
+  balance?: string | {
     summary?: string
     details?: {
       energy?: string
@@ -255,9 +278,21 @@ interface NutritionAnalysis {
       micronutrients?: string
     }
   }
-  highlights?: string[]
-  recommendations?: string[]
-  dietType?: string[]
+  highlights?: (string | {
+    nutrient: string
+    amount: string
+    percentage: string
+    benefit: string
+  })[]
+  recommendations?: (string | {
+    type: string
+    suggestion: string
+  })[]
+  dietType?: (string | {
+    type: string
+    suitability: string
+    reason: string
+  })[]
 }
 
 interface NutritionResult {
@@ -558,6 +593,32 @@ const addToShoppingList = () => {
   text-align: center;
 }
 
+/* 适合度样式 */
+.suitability-high {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.suitability-medium-high {
+  color: #20c997;
+  font-weight: 600;
+}
+
+.suitability-medium {
+  color: #6c757d;
+  font-weight: 600;
+}
+
+.suitability-medium-low {
+  color: #fd7e14;
+  font-weight: 600;
+}
+
+.suitability-low {
+  color: #dc3545;
+  font-weight: 600;
+}
+
 /* 营养分析样式 */
 .nutrition-analysis {
   margin-top: 20px;
@@ -576,31 +637,40 @@ const addToShoppingList = () => {
 }
 
 .balance-section {
-  background: #f8f9fa;
-  padding: 16px;
-  border-radius: 8px;
   margin-bottom: 16px;
+}
+
+.balance-content {
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  color: #856404;
+  line-height: 1.5;
+  font-size: 14px;
 }
 
 .balance-summary {
   margin-bottom: 12px;
+  font-weight: 500;
 }
 
 .balance-details {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  border-top: 1px solid rgba(255, 193, 7, 0.3);
+  padding-top: 12px;
+  margin-top: 12px;
 }
 
-.balance-detail {
-  display: flex;
-  gap: 8px;
+.detail-item {
+  margin-bottom: 8px;
 }
 
-.detail-label {
-  font-weight: 600;
-  color: #333;
-  min-width: 80px;
+.detail-item:last-child {
+  margin-bottom: 0;
+}
+
+.detail-item strong {
+  color: #5a3e1b;
 }
 
 .highlights-section {
@@ -800,6 +870,32 @@ const addToShoppingList = () => {
   background: #218838;
 }
 
+/* 适合度样式 */
+.suitability-high {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.suitability-medium-high {
+  color: #20c997;
+  font-weight: 600;
+}
+
+.suitability-medium {
+  color: #6c757d;
+  font-weight: 600;
+}
+
+.suitability-medium-low {
+  color: #fd7e14;
+  font-weight: 600;
+}
+
+.suitability-low {
+  color: #dc3545;
+  font-weight: 600;
+}
+
 /* 营养分析样式 */
 .nutrition-analysis {
   margin-top: 20px;
@@ -818,31 +914,40 @@ const addToShoppingList = () => {
 }
 
 .balance-section {
-  background: #f8f9fa;
-  padding: 16px;
-  border-radius: 8px;
   margin-bottom: 16px;
+}
+
+.balance-content {
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  color: #856404;
+  line-height: 1.5;
+  font-size: 14px;
 }
 
 .balance-summary {
   margin-bottom: 12px;
+  font-weight: 500;
 }
 
 .balance-details {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  border-top: 1px solid rgba(255, 193, 7, 0.3);
+  padding-top: 12px;
+  margin-top: 12px;
 }
 
-.balance-detail {
-  display: flex;
-  gap: 8px;
+.detail-item {
+  margin-bottom: 8px;
 }
 
-.detail-label {
-  font-weight: 600;
-  color: #333;
-  min-width: 80px;
+.detail-item:last-child {
+  margin-bottom: 0;
+}
+
+.detail-item strong {
+  color: #5a3e1b;
 }
 
 .highlights-section {
