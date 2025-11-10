@@ -68,6 +68,7 @@
     <div class="list-actions">
       <button class="action-button" @click="clearCompleted">清除已选</button>
       <button class="action-button" @click="printList">打印清单</button>
+      <button class="action-button" @click="saveListToFile">保存到文件</button>
       <button class="action-button" @click="shareList">分享</button>
     </div>
   </div>
@@ -231,23 +232,118 @@ const clearList = () => {
 
 // 打印清单
 const printList = () => {
+  const currentDate = new Date().toLocaleDateString('zh-CN')
   const printContent = groupedIngredients.value
-    .map(ing => `${ing.checked ? '✅' : '⬜'} ${ing.name} ${ing.quantity}`)
-    .join('\n')
+    .map(ing => `<tr><td style="text-align: center; padding: 4px;">${ing.checked ? '✅' : '⬜'}</td><td style="padding: 8px;">${ing.name}</td><td style="padding: 8px;">${ing.quantity}</td></tr>`)
+    .join('')
   
   const printWindow = window.open('', '_blank')
   if (printWindow) {
     printWindow.document.write(`
       <html>
-        <head><title>购物清单</title></head>
+        <head>
+          <title>购物清单</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            h1 { color: #333; text-align: center; }
+            .date { text-align: center; color: #666; margin-bottom: 20px; }
+            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            th { background: #f5f5f5; padding: 12px; text-align: left; border-bottom: 2px solid #ddd; }
+            td { border-bottom: 1px solid #eee; }
+            .footer { text-align: center; margin-top: 30px; color: #888; font-size: 12px; }
+            @media print {
+              body { margin: 0; }
+              @page { margin: 1cm; }
+            }
+          </style>
+        </head>
         <body>
           <h1>购物清单</h1>
-          <pre style="font-size: 16px; line-height: 1.5;">${printContent}</pre>
+          <div class="date">生成时间: ${currentDate}</div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 60px; text-align: center;">状态</th>
+                <th style="width: 200px;">食材名称</th>
+                <th style="width: 100px;">数量</th>
+              </tr>
+            </thead>
+            <tbody>${printContent}</tbody>
+          </table>
+          <div class="footer">共 ${groupedIngredients.value.length} 项食材</div>
         </body>
       </html>
     `)
-    printWindow.print()
-    printWindow.close()
+    printWindow.document.close()
+    
+    // 延迟打印以确保样式加载完成
+    setTimeout(() => {
+      printWindow.print()
+      printWindow.close()
+    }, 500)
+  }
+}
+
+// 保存清单到本地文件
+const saveListToFile = async () => {
+  const currentDate = new Date().toLocaleDateString('zh-CN')
+  const fileName = `购物清单_${currentDate}.txt`
+  
+  // 构建文件内容
+  const fileContent = `购物清单\n生成时间: ${currentDate}\n\n` + 
+    groupedIngredients.value
+      .map(ing => `${ing.checked ? '[✓]' : '[ ]'} ${ing.name} ${ing.quantity}`)
+      .join('\n') + 
+    `\n\n共 ${groupedIngredients.value.length} 项食材`
+  
+  try {
+    // 检查是否支持 File System Access API
+    if ('showSaveFilePicker' in window) {
+      const handle = await (window as any).showSaveFilePicker({
+        suggestedName: fileName,
+        types: [{
+          description: '文本文件',
+          accept: {'text/plain': ['.txt']}
+        }]
+      })
+      
+      const writable = await handle.createWritable()
+      await writable.write(fileContent)
+      await writable.close()
+      
+      alert('购物清单已保存到本地文件！')
+    } else {
+      // 备用方案：使用下载链接
+      const blob = new Blob([fileContent], { type: 'text/plain;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = fileName
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      
+      alert('购物清单下载完成！')
+    }
+  } catch (error) {
+    console.error('保存文件失败:', error)
+    
+    // 最后备用方案：用户手动复制
+    const finalContent = `购物清单 (${currentDate})\n\n` + 
+      groupedIngredients.value
+        .map(ing => `${ing.checked ? '✅' : '⬜'} ${ing.name} ${ing.quantity}`)
+        .join('\n') + 
+      `\n\n共 ${groupedIngredients.value.length} 项食材`
+    
+    if (confirm('浏览器不支持直接保存文件。是否复制内容到剪贴板？')) {
+      try {
+        await navigator.clipboard.writeText(finalContent)
+        alert('购物清单已复制到剪贴板！您可以粘贴到文本编辑器中保存。')
+      } catch (clipboardError) {
+        alert('复制失败，请手动复制以下内容：\n\n' + finalContent)
+      }
+    }
   }
 }
 
@@ -491,13 +587,13 @@ defineExpose({
 
 /* 列表操作按钮 */
 .list-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   margin-top: 20px;
 }
 
 .action-button {
-  flex: 1;
   background: #4ecdc4;
   color: white;
   border: none;
@@ -505,17 +601,32 @@ defineExpose({
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
+  transition: background-color 0.3s ease;
 }
 
 .action-button:hover {
   background: #3dbeb4;
 }
 
-.action-button:first-child {
+.action-button:nth-child(1) {
   background: #6c757d;
 }
 
-.action-button:first-child:hover {
+.action-button:nth-child(1):hover {
   background: #5a6268;
+}
+
+.action-button:nth-child(3) {
+  background: #28a745;
+}
+
+.action-button:nth-child(3):hover {
+  background: #218838;
+}
+
+@media (max-width: 480px) {
+  .list-actions {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
